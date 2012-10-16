@@ -1,21 +1,3 @@
-/*
-   Copyright Liam (liamzebedee) Edwards-Playne 2012
-
-   This file is part of sublogic-go.
-
-   sublogic-go is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   sublogic-go is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with sublogic-go.  If not, see <http://www.gnu.org/licenses/>.
-*/
 package sublogic
 
 import (
@@ -40,19 +22,27 @@ func NewOpinion(belief, disbelief, uncertainty, baserate float32) (*Opinion, err
 		return nil, errors.New("The sum of all opinion components doesn't equal 1")
 	}
 	
-	outOfRange := func(val float32) bool {
-		if (val < 0) || (val > 1) {
-			return true
-		}
-		return false
-	}
-	
 	if outOfRange(belief) || outOfRange(disbelief) || outOfRange(uncertainty) || outOfRange(baserate) {
 		return nil, errors.New("Opinion component isn't in range of 0 to 1")
 	}
-	
 	
 	opinion := Opinion{ belief, disbelief, uncertainty, baserate }
 	return &opinion, nil
 }
 
+func newEmptyOpinion() (*Opinion) {
+	return &Opinion{ }
+}
+
+// Where A trusts B, and B trusts X, this returns A's transitive trust in X
+func (A *Opinion) Discount(B *Opinion) (C *Opinion) {
+	C = newEmptyOpinion()
+	
+	// TODO check A and B for consistency
+	C.Belief = A.Belief * B.Belief
+	C.Disbelief = A.Belief * B.Disbelief
+	C.Uncertainty = (A.Disbelief + A.Uncertainty + A.Belief*B.Uncertainty)
+	C.Baserate = B.Baserate
+	
+	return C
+}
